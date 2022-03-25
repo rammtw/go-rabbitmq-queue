@@ -2,8 +2,10 @@ package main
 
 import (
 	goRabbitmqQueue "domain.com/queue-app"
+	"encoding/json"
 	"github.com/streadway/amqp"
 	"log"
+	"os"
 )
 
 func handleError(err error, msg string) {
@@ -38,4 +40,32 @@ func main() {
 	)
 	handleError(err, "Could not register consumer")
 
+	stopChan := make(chan bool)
+
+	go func() {
+		log.Printf("Consumer ready, PID: %d", os.Getpid())
+		for d := range messageChannel {
+			log.Printf("Received a message: %s", d.Body)
+
+			addTask := &goRabbitmqQueue.AddTask{}
+
+			err := json.Unmarshal(d.Body, addTask)
+
+			if err != nil {
+				log.Printf("Error decoding JSON: %s", err)
+			}
+
+			log.Printf("Result of %d + %d is : %d", addTask.Number1, addTask.Number2, addTask.Number1+addTask.Number2)
+
+			if err := d.Ack(false); err != nil {
+				log.Printf("Error acknowledging message : %s", err)
+			} else {
+				log.Printf("Acknowledged message")
+			}
+		}
+	}()
+
+	<-stopChan
 }
+
+
