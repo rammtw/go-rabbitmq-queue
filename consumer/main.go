@@ -36,7 +36,7 @@ func main() {
 		false,
 		false,
 		false,
-		nil
+		nil,
 	)
 	handleError(err, "Could not register consumer")
 
@@ -67,5 +67,3 @@ func main() {
 
 	<-stopChan
 }
-
-
